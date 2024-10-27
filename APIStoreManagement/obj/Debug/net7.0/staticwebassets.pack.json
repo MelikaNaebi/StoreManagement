@@ -1,0 +1,29 @@
+{
+  "Files": [
+    {
+      "Id": "F:\\StoreManagement\\APIStoreManagement\\APIStoreManagement\\wwwroot\\app.js",
+      "PackagePath": "staticwebassets\\app.js"
+    },
+    {
+      "Id": "F:\\StoreManagement\\APIStoreManagement\\APIStoreManagement\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.APIStoreManagement.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.build.APIStoreManagement.props",
+      "PackagePath": "build\\APIStoreManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildMultiTargeting.APIStoreManagement.props",
+      "PackagePath": "buildMultiTargeting\\APIStoreManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildTransitive.APIStoreManagement.props",
+      "PackagePath": "buildTransitive\\APIStoreManagement.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
