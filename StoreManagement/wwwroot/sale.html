@@ -1,0 +1,782 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مدیریت فروش</title>
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.1.3/dist/css/persian-datepicker.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+            th .table-filter {
+                width: calc(100% - 16px);
+                padding: 3px;
+                margin-top: 5px;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                box-sizing: border-box;
+                font-size: 0.9em;
+                text-align: right;
+                direction: rtl;
+            }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        #error {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .add-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #28a745;
+            color: white;
+            font-size: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 999;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.3);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+            .close:hover {
+                color: red;
+            }
+
+        input:not(.table-filter):not(.persian-date-input), select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button.save-btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+            button.save-btn:hover {
+                background-color: #0056b3;
+            }
+
+        .filter-section {
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 15px;
+            background-color: #e9f5ff;
+            border-radius: 8px;
+            border: 1px solid #cce0ff;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .filter-section label {
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .filter-section select,
+        .filter-section input.persian-date-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #007BFF;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .persian-date-input {
+            text-align: right;
+            direction: rtl;
+        }
+
+        .action-button {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        .edit-button {
+            background-color: #ffc107;
+            color: white;
+        }
+
+            .edit-button:hover {
+                background-color: #e0a800;
+            }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+            .delete-button:hover {
+                background-color: #c82333;
+            }
+    </style>
+</head>
+<body>
+
+    <h1>مدیریت فروش</h1>
+    <div id="error"></div>
+
+    <button class="add-button" id="addSaleBtn">+</button>
+
+    <div class="filter-section">
+        <div class="filter-group">
+            <label for="filterPattern">فیلتر بر اساس مدرسه:</label>
+            <select id="filterPattern">
+                <option value="">همه مدارس</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="filterSize">فیلتر بر اساس سایز:</label>
+            <select id="filterSize">
+                <option value="">همه سایزها</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="startDate">از تاریخ:</label>
+            <input type="text" id="startDate" class="persian-date-input" />
+        </div>
+
+        <div class="filter-group">
+            <label for="endDate">تا تاریخ:</label>
+            <input type="text" id="endDate" class="persian-date-input" />
+        </div>
+
+    </div>
+
+    <div id="saleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2 id="modalTitle">اضافه کردن فروش</h2>
+            <input type="text" id="customerName" placeholder="نام مشتری" required />
+
+            <select id="saleSize" required>
+                <option value="">انتخاب سایز</option>
+            </select>
+
+            <select id="salePattern" required>
+                <option value="">انتخاب مدرسه</option>
+            </select>
+
+            <input type="text" id="saleDate" class="persian-date-input" placeholder="تاریخ فروش" required />
+
+            <input type="number" id="soldPrice" placeholder="مبلغ فروش" required />
+
+            <input type="number" id="discount" placeholder="تخفیف (اختیاری)" value="0" />
+
+            <input type="text" id="description" placeholder="توضیحات (اختیاری)" />
+
+            <input type="hidden" id="clothingId" name="ClothingId" />
+            <input type="hidden" id="saleIdToEdit" />
+            <button class="save-btn" id="saveSaleBtn">ذخیره</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>عملیات</th>
+                <th>
+                    نام مشتری
+                    <input type="text" class="table-filter" data-column="1" placeholder="فیلتر" />
+                </th>
+                <th>سایز</th>
+                <th>مدرسه</th>
+                <th>تاریخ</th>
+                <th>مبلغ فروش</th>
+                <th>تخفیف</th>
+                <th>بیعانه اولیه</th>
+                <th>مبلغ باقیمانده</th>
+                <th>
+                    توضیحات
+                    <input type="text" class="table-filter" data-column="9" placeholder="فیلتر" />
+                </th>
+            </tr>
+        </thead>
+        <tbody id="salesTableBody">
+        </tbody>
+    </table>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.1.3/dist/js/persian-datepicker.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Initialize Persian Datepickers
+            $(".persian-date-input").persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValue: false,
+                onSelect: function (unix) {
+                    if (this.$el[0].id === 'startDate' || this.$el[0].id === 'endDate') {
+                        fetchSales();
+                    }
+                }
+            });
+
+            fetchSizes();
+            fetchPatterns();
+            fetchSales(); // Initial fetch of sales
+        });
+
+        const addSaleBtn = document.getElementById("addSaleBtn");
+        const saleModal = document.getElementById("saleModal");
+        const closeModalBtn = document.getElementById("closeModal");
+        const saveSaleBtn = document.getElementById("saveSaleBtn");
+        const errorDiv = document.getElementById("error");
+        const modalTitle = document.getElementById("modalTitle");
+
+        // Input fields in the modal
+        const customerNameInput = document.getElementById("customerName");
+        const saleSizeSelect = document.getElementById("saleSize");
+        const salePatternSelect = document.getElementById("salePattern");
+        const saleDateInput = document.getElementById("saleDate");
+        const soldPriceInput = document.getElementById("soldPrice");
+        const discountInput = document.getElementById("discount");
+        const descriptionInput = document.getElementById("description");
+        const clothingIdInput = document.getElementById("clothingId"); // Changed to lowercase 'clothingId' for consistency
+        const saleIdToEditInput = document.getElementById("saleIdToEdit");
+
+        // Filter elements (outside table)
+        const filterPatternSelect = document.getElementById("filterPattern");
+        const filterSizeSelect = document.getElementById("filterSize");
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+
+        addSaleBtn.addEventListener("click", () => {
+            clearForm();
+            modalTitle.textContent = "اضافه کردن فروش";
+            errorDiv.textContent = "";
+            saleModal.style.display = "block";
+        });
+
+        closeModalBtn.addEventListener("click", () => {
+            saleModal.style.display = "none";
+        });
+
+        window.onclick = function (event) {
+            if (event.target == saleModal) {
+                saleModal.style.display = "none";
+            }
+        };
+
+        // Event Listeners for automatic filtering on change of dropdowns
+        filterPatternSelect.addEventListener("change", fetchSales);
+        filterSizeSelect.addEventListener("change", fetchSales);
+
+        // Function to fetch available sizes from API
+        async function fetchSizes() {
+            try {
+                const res = await fetch("http://localhost:5014/api/sizes");
+                if (!res.ok) throw new Error("خطا در دریافت سایزها");
+
+                const sizes = await res.json();
+                const sizeSelectModal = document.getElementById("saleSize");
+                const sizeSelectFilter = document.getElementById("filterSize");
+
+                sizeSelectModal.innerHTML = '<option value="">انتخاب سایز</option>';
+                sizeSelectFilter.innerHTML = '<option value="">همه سایزها</option>';
+
+                sizes.forEach(size => {
+                    const optionModal = document.createElement("option");
+                    optionModal.value = size.id;
+                    optionModal.textContent = size.sizeName || size.name; // Use sizeName or name
+                    sizeSelectModal.appendChild(optionModal);
+
+                    const optionFilter = document.createElement("option");
+                    optionFilter.value = size.id;
+                    optionFilter.textContent = size.sizeName || size.name;
+                    sizeSelectFilter.appendChild(optionFilter);
+                });
+            } catch (err) {
+                console.error("Error fetching sizes:", err);
+                errorDiv.textContent = "مشکل در بارگذاری سایزها.";
+            }
+        }
+
+        // Function to fetch available patterns (schools) from API
+        async function fetchPatterns() {
+            try {
+                const res = await fetch("http://localhost:5014/api/pattern");
+                if (!res.ok) throw new Error("خطا در دریافت مدارس");
+
+                const patterns = await res.json();
+                const patternSelectModal = document.getElementById("salePattern");
+                const patternSelectFilter = document.getElementById("filterPattern");
+
+                patternSelectModal.innerHTML = '<option value="">انتخاب مدرسه</option>';
+                patternSelectFilter.innerHTML = '<option value="">همه مدارس</option>';
+
+                patterns.forEach(pattern => {
+                    const optionModal = document.createElement("option");
+                    optionModal.value = pattern.id;
+                    optionModal.textContent = pattern.name || pattern.Name;
+                    patternSelectModal.appendChild(optionModal);
+
+                    const optionFilter = document.createElement("option");
+                    optionFilter.value = pattern.id;
+                    optionFilter.textContent = pattern.name || pattern.Name;
+                    patternSelectFilter.appendChild(optionFilter);
+                });
+            } catch (err) {
+                console.error("Error fetching patterns:", err);
+                errorDiv.textContent = "مشکل در بارگذاری مدارس.";
+            }
+        }
+
+        // Function to fetch sales data from API
+        async function fetchSales() {
+            try {
+                const patternId = filterPatternSelect.value;
+                const sizeId = filterSizeSelect.value;
+
+                const startDatePersian = startDateInput.value;
+                const endDatePersian = endDateInput.value;
+
+                let startDateGregorian = null;
+                let endDateGregorian = null;
+
+                if (startDatePersian) {
+                    try {
+                        startDateGregorian = new persianDate([
+                            parseInt(startDatePersian.split('/')[0]),
+                            parseInt(startDatePersian.split('/')[1]),
+                            parseInt(startDatePersian.split('/')[2])
+                        ]).toDate().toISOString();
+                    } catch (e) {
+                        console.error("Invalid start date format:", startDatePersian, e);
+                        errorDiv.textContent = "فرمت تاریخ شروع نامعتبر است.";
+                        return;
+                    }
+                }
+                if (endDatePersian) {
+                    try {
+                        endDateGregorian = new persianDate([
+                            parseInt(endDatePersian.split('/')[0]),
+                            parseInt(endDatePersian.split('/')[1]),
+                            parseInt(endDatePersian.split('/')[2])
+                        ]).toDate().toISOString();
+                    } catch (e) {
+                        console.error("Invalid end date format:", endDatePersian, e);
+                        errorDiv.textContent = "فرمت تاریخ پایان نامعتبر است.";
+                        return;
+                    }
+                }
+
+                let url = "http://localhost:5014/api/sale";
+                const params = new URLSearchParams();
+                if (patternId) {
+                    params.append("patternId", patternId);
+                }
+                if (sizeId) {
+                    params.append("sizeId", sizeId);
+                }
+                if (startDateGregorian) {
+                    params.append("startDate", startDateGregorian);
+                }
+                if (endDateGregorian) {
+                    params.append("endDate", endDateGregorian);
+                }
+
+                if (params.toString()) {
+                    url += `?${params.toString()}`;
+                }
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("خطا در دریافت فروش‌ها");
+
+                const sales = await res.json();
+                const tbody = document.getElementById("salesTableBody");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                sales.forEach(sale => {
+                    const initialDeposit = sale.initialDeposit || 0; // Assuming SalesDto now has InitialDeposit
+                    const amountDue = sale.soldPrice - (sale.discount || 0) - initialDeposit;
+
+                    const saleDateGregorian = new Date(sale.date);
+                    const saleDatePersian = new persianDate(saleDateGregorian).toLocale('fa').format('YYYY/MM/DD');
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                                    <td>
+                                        <button onclick="editSale(${sale.id})" class="action-button edit-button">اصلاح</button>
+                                        <button onclick="deleteSale(${sale.id})" class="action-button delete-button">حذف</button>
+                                    </td>
+                                    <td>${sale.customerName || "-"}</td>
+                                    <td>${sale.sizeName || "-"}</td>
+                                    <td>${sale.patternName || "-"}</td>
+                                    <td>${saleDatePersian}</td>
+                                    <td>${(sale.soldPrice || 0).toLocaleString('fa-IR')}</td>
+                                    <td>${(sale.discount || 0).toLocaleString('fa-IR')}</td>
+                                    <td>${initialDeposit.toLocaleString('fa-IR')}</td> <td>${amountDue.toLocaleString('fa-IR')}</td> <td>${sale.description || "-"}</td>
+                                `;
+                    tbody.appendChild(tr);
+                });
+
+                filterTable(); // Apply inline filters after table is populated
+
+            } catch (err) {
+                console.error("Error fetching sales:", err);
+                errorDiv.textContent = "مشکل در بارگذاری فروش‌ها.";
+            }
+        }
+
+        // Function to clear modal form inputs
+        function clearForm() {
+            customerNameInput.value = "";
+            saleSizeSelect.value = "";
+            salePatternSelect.value = "";
+            saleDateInput.value = "";
+            soldPriceInput.value = "";
+            discountInput.value = "0"; // Reset discount to 0
+            descriptionInput.value = "";
+            clothingIdInput.value = "";
+            saleIdToEditInput.value = "";
+            errorDiv.textContent = "";
+        }
+
+        // Script to fetch ClothingId based on selected Size and Pattern for sale modal
+        async function fetchClothingId() {
+            const patternId = salePatternSelect.value;
+            const sizeId = saleSizeSelect.value;
+
+            errorDiv.textContent = "";
+            clothingIdInput.value = "";
+
+            if (!patternId || !sizeId) {
+                console.log("سایز یا مدرسه انتخاب نشده است.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5014/api/clothing/get-by-size-and-pattern`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        patternId: parseInt(patternId),
+                        sizeId: parseInt(sizeId)
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    clothingIdInput.value = data.id || data.clothingId || data.Id;
+                    console.log("ClothingId fetched successfully:", data);
+                    errorDiv.textContent = "";
+                } else {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.message || "لباسی با این سایز و مدرسه یافت نشد. لطفا ترکیب دیگری را انتخاب کنید.";
+                    console.log("خطا: Clothing not found. پاسخ سرور:", errorMessage);
+                    errorDiv.textContent = errorMessage;
+                }
+            } catch (error) {
+                console.error("Error fetching clothing ID:", error);
+                errorDiv.textContent = "خطا در پیدا کردن شناسه لباس. دوباره تلاش کنید.";
+            }
+        }
+
+        // Add event listeners for modal dropdowns to fetch ClothingId
+        salePatternSelect.addEventListener("change", fetchClothingId);
+        saleSizeSelect.addEventListener("change", fetchClothingId);
+
+        // Function to populate modal for editing a sale
+        async function editSale(saleId) {
+            clearForm();
+            modalTitle.textContent = "اصلاح فروش";
+            saleIdToEditInput.value = saleId;
+
+            try {
+                const res = await fetch(`http://localhost:5014/api/sale/${saleId}`);
+                if (!res.ok) throw new Error("خطا در دریافت اطلاعات فروش برای ویرایش.");
+
+                const sale = await res.json();
+
+                customerNameInput.value = sale.customerName;
+
+                // Fetch sizes/patterns first to populate dropdowns
+                await Promise.all([fetchSizes(), fetchPatterns()]);
+
+                // Then set the selected values
+                // Assuming sale DTO returns clothing.sizeId and clothing.patternId
+                if (sale.clothing) {
+                    saleSizeSelect.value = sale.clothing.sizeId;
+                    salePatternSelect.value = sale.clothing.patternId;
+                } else {
+                    // Fallback or error if clothing info is not available
+                    console.warn("Clothing details not available for sale", saleId);
+                }
+
+                // Manually trigger fetchClothingId after setting dropdowns for edit mode
+                // This ensures clothingIdInput is correctly set for existing sales too.
+                fetchClothingId();
+
+                const saleDateGregorian = new Date(sale.date);
+                const saleDatePersian = new persianDate(saleDateGregorian).toLocale('fa').format('YYYY/MM/DD');
+                saleDateInput.value = saleDatePersian;
+
+                soldPriceInput.value = sale.soldPrice;
+                discountInput.value = sale.discount;
+                descriptionInput.value = sale.description;
+                clothingIdInput.value = sale.clothingId;
+
+                saleModal.style.display = "block";
+
+            } catch (err) {
+                console.error("Error fetching sale for edit:", err);
+                errorDiv.textContent = "مشکل در بارگذاری اطلاعات فروش برای ویرایش.";
+            }
+        }
+
+        // Save new sale or update existing sale logic
+        saveSaleBtn.addEventListener("click", async () => {
+            errorDiv.textContent = "";
+
+            const saleId = saleIdToEditInput.value;
+            const isEditing = !!saleId;
+
+            const customerName = customerNameInput.value.trim();
+            const sizeId = saleSizeSelect.value;
+            const patternId = salePatternSelect.value;
+            const saleDatePersian = saleDateInput.value;
+            const soldPrice = parseFloat(soldPriceInput.value);
+            const discount = parseFloat(discountInput.value) || 0;
+            const description = descriptionInput.value.trim();
+
+            // InitialDeposit is NOT set in sales.html as this is for direct sales.
+            // If direct sales can also have deposit, you need a field for it here.
+            // For now, assuming direct sales are always full payment or don't track deposit here.
+            const initialDepositForDirectSale = 0; // For direct sales, assuming no initial deposit unless specified
+
+            if (!customerName || !sizeId || !patternId || !saleDatePersian || isNaN(soldPrice)) {
+                errorDiv.textContent = "لطفا همه فیلدهای ضروری را پر کنید.";
+                return;
+            }
+
+            let saleDateGregorian = null;
+            try {
+                saleDateGregorian = new persianDate([
+                    parseInt(saleDatePersian.split('/')[0]),
+                    parseInt(saleDatePersian.split('/')[1]),
+                    parseInt(saleDatePersian.split('/')[2])
+                ]).toDate().toISOString();
+            } catch (e) {
+                console.error("Invalid sale date format:", saleDatePersian, e);
+                errorDiv.textContent = "فرمت تاریخ فروش نامعتبر است.";
+                return;
+            }
+
+            await fetchClothingId();
+            const clothingId = clothingIdInput.value;
+
+            if (!clothingId) {
+                errorDiv.textContent = errorDiv.textContent || "شناسه لباس نامعتبر است. لطفا سایز و مدرسه را انتخاب کنید.";
+                return;
+            }
+
+            const saleData = {
+                customerName: customerName,
+                date: saleDateGregorian,
+                soldPrice: soldPrice,
+                discount: discount,
+                description: description,
+                clothingId: parseInt(clothingId),
+                initialDeposit: initialDepositForDirectSale // Explicitly set for direct sales
+            };
+
+            let method = "POST";
+            let url = "http://localhost:5014/api/sale"; // URL for adding direct sales
+
+            if (isEditing) {
+                method = "PUT";
+                url = `http://localhost:5014/api/sale/${saleId}`;
+                saleData.id = parseInt(saleId);
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(saleData)
+                });
+
+                if (!res.ok) {
+                    const errorResponse = await res.json();
+                    const errorMessage = errorResponse.message || `خطا در ${isEditing ? "اصلاح" : "ذخیره"} فروش.`;
+                    throw new Error(errorMessage);
+                }
+
+                errorDiv.textContent = `فروش با موفقیت ${isEditing ? "اصلاح" : "ذخیره"} شد.`;
+                await fetchSales();
+                saleModal.style.display = "none";
+                clearForm();
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = `خطا: ${err.message}`;
+            }
+        });
+
+        // Function to handle sale deletion
+        async function deleteSale(saleId) {
+            if (!confirm("آیا از حذف این فروش اطمینان دارید؟")) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:5014/api/sale/${saleId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`خطا در حذف فروش: ${errorText}`);
+                }
+
+                errorDiv.textContent = "فروش با موفقیت حذف شد.";
+                fetchSales();
+            } catch (err) {
+                console.error("Error deleting sale:", err);
+                errorDiv.textContent = `خطا در حذف فروش. جزئیات: ${err.message}`;
+            }
+        }
+
+        // Inline Table Filtering Logic
+        const salesTableBody = document.getElementById("salesTableBody");
+
+        document.querySelectorAll(".table-filter").forEach(input => {
+            input.addEventListener("keyup", function () {
+                filterTable();
+            });
+        });
+
+        function filterTable() {
+            const filters = {};
+            document.querySelectorAll(".table-filter").forEach(input => {
+                const columnIndex = parseInt(input.getAttribute("data-column"));
+                const filterValue = input.value.toLowerCase().trim();
+                if (filterValue) {
+                    filters[columnIndex] = filterValue;
+                }
+            });
+
+            const rows = salesTableBody.querySelectorAll("tr");
+            rows.forEach(row => {
+                let matchesAllFilters = true;
+                for (const columnIndex in filters) {
+                    const cellText = row.children[columnIndex].textContent.toLowerCase();
+                    if (!cellText.includes(filters[columnIndex])) {
+                        matchesAllFilters = false;
+                        break;
+                    }
+                }
+                row.style.display = matchesAllFilters ? "" : "none";
+            });
+        }
+    </script>
+
+</body>
+</html>

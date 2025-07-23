@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شانلی</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px; /* فاصله کمتر بین آیتم‌ها */
+            margin-top: 20px;
+        }
+
+            .links a {
+                width: calc(50% - 10px); /* تنظیم عرض به نصف با فاصله کمتر */
+                text-align: center;
+                color: #007BFF;
+                text-decoration: none;
+            }
+
+                .links a:hover {
+                    text-decoration: underline;
+                }
+
+            .links figure {
+                margin: 0;
+            }
+
+            .links img {
+                width: 100px;
+                height: auto;
+            }
+
+            .links figcaption {
+                margin-top: 8px;
+                font-size: 1.2em;
+                color: #333;
+            }
+    </style>
+</head>
+<body>
+    <h1>Store management app</h1>
+    <div class="links">
+
+        <a href="cost.html">
+            <figure>
+                <img src="/Pictures/images.jpg" alt="هزینه ها">
+                <figcaption>هزینه ها</figcaption>
+            </figure>
+        </a>
+
+
+        <a href="Orders.html">
+            <figure>
+                <img src="Pictures/orders.jpg" alt="سفارش ها">
+                <figcaption>سفارش ها</figcaption>
+            </figure>
+        </a>
+
+        <a href="sale.html">
+            <figure>
+                <img src="Pictures/Sale.jpg" alt="ثبت فروش">
+                <figcaption> ثبت فروش</figcaption>
+            </figure>
+        </a>
+
+        <a href="Inventory.html">
+            <figure>
+                <img src="Pictures/inventory.jpg" alt="موجودی">
+                <figcaption>موجودی</figcaption>
+            </figure>
+        </a>
+
+
+    </div>
+</body>
+</html>

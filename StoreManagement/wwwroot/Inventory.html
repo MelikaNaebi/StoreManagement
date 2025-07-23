@@ -1,0 +1,438 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مدیریت موجودی</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        #error {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .add-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #28a745;
+            color: white;
+            font-size: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.3);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+            .close:hover {
+                color: red;
+            }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button.save-btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+            button.save-btn:hover {
+                background-color: #0056b3;
+            }
+
+        /* CSS جدید برای کانتینر فیلتر */
+        .filter-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            text-align: right;
+        }
+
+            .filter-container label {
+                margin-left: 10px;
+                font-weight: bold;
+            }
+
+            .filter-container select {
+                width: 200px; /* یا هر عرض دیگری که مناسب می‌دانید */
+            }
+    </style>
+</head>
+<body>
+
+    <h1>مدیریت موجودی</h1>
+    <div id="error"></div>
+
+    <button class="add-button" id="addInventoryBtn">+</button>
+
+    <div class="filter-container">
+        <label for="filterPattern">فیلتر بر اساس مدرسه:</label>
+        <select id="filterPattern">
+            <option value="">همه مدارس</option>
+        </select>
+    </div>
+
+    <div id="inventoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>اضافه کردن موجودی جدید</h2>
+
+            <select id="inventorySize" required>
+                <option value="">انتخاب سایز</option>
+            </select>
+
+            <select id="inventoryPattern" required>
+                <option value="">انتخاب مدرسه</option>
+            </select>
+
+            <input type="number" id="quantity" placeholder="تعداد موجودی" required />
+
+            <input type="hidden" id="clothingId" name="clothingId" />
+
+            <button class="save-btn" id="saveInventoryBtn">ذخیره</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>نام مدرسه</th>
+                <th>نام سایز</th>
+                <th>تعداد موجودی</th>
+            </tr>
+        </thead>
+        <tbody id="inventoryTableBody">
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchSizes();
+            fetchPatterns("filterPattern"); // بارگذاری مدارس برای فیلتر
+            fetchPatterns("inventoryPattern"); // بارگذاری مدارس برای فرم اضافه/ویرایش
+            fetchInventories(); // بارگذاری اولیه جدول
+        });
+
+        const addInventoryBtn = document.getElementById("addInventoryBtn");
+        const inventoryModal = document.getElementById("inventoryModal");
+        const closeModalBtn = document.getElementById("closeModal");
+        const saveInventoryBtn = document.getElementById("saveInventoryBtn");
+        const errorDiv = document.getElementById("error");
+
+        addInventoryBtn.addEventListener("click", () => {
+            clearForm();
+            errorDiv.textContent = "";
+            inventoryModal.style.display = "block";
+        });
+
+        closeModalBtn.addEventListener("click", () => {
+            inventoryModal.style.display = "none";
+        });
+
+        window.onclick = function (event) {
+            if (event.target == inventoryModal) {
+                inventoryModal.style.display = "none";
+            }
+        };
+
+        async function fetchSizes() {
+            try {
+                const res = await fetch("http://localhost:5014/api/sizes");
+                if (!res.ok) throw new Error("خطا در دریافت سایزها");
+
+                const sizes = await res.json();
+                const sizeSelect = document.getElementById("inventorySize");
+                sizeSelect.innerHTML = '<option value="">انتخاب سایز</option>';
+
+                sizes.forEach(size => {
+                    const option = document.createElement("option");
+                    option.value = size.id;
+                    option.textContent = size.name || size.Name;
+                    sizeSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = "مشکل در بارگذاری سایزها.";
+            }
+        }
+
+        // تابع fetchPatterns اصلاح شده برای پشتیبانی از چند Select Box
+        async function fetchPatterns(selectId) {
+            try {
+                const res = await fetch("http://localhost:5014/api/pattern");
+                if (!res.ok) throw new Error("خطا در دریافت مدارس");
+
+                const patterns = await res.json();
+                const patternSelect = document.getElementById(selectId);
+
+                // پاک کردن گزینه‌های قبلی
+                patternSelect.innerHTML = '';
+
+                // افزودن گزینه پیش‌فرض
+                const defaultOption = document.createElement("option");
+                defaultOption.value = "";
+                if (selectId === "inventoryPattern") {
+                    defaultOption.textContent = "انتخاب مدرسه";
+                } else { // برای filterPattern
+                    defaultOption.textContent = "همه مدارس";
+                }
+                patternSelect.appendChild(defaultOption);
+
+                // افزودن مدارس واقعی
+                patterns.forEach(pattern => {
+                    const option = document.createElement("option");
+                    option.value = pattern.id;
+                    option.textContent = pattern.name || pattern.Name;
+                    patternSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = `مشکل در بارگذاری مدارس برای ${selectId}.`;
+            }
+        }
+
+        async function fetchClothingId() {
+            var patternSelect = document.getElementById("inventoryPattern");
+            var sizeSelect = document.getElementById("inventorySize");
+
+            var patternId = patternSelect.value;
+            var sizeId = sizeSelect.value;
+
+            if (patternId && sizeId) {
+                try {
+                    const response = await fetch(`http://localhost:5014/api/clothing/get-by-size-and-pattern`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            patternId: parseInt(patternId),
+                            sizeId: parseInt(sizeId)
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById("clothingId").value = data.id || data.Id;
+                    } else {
+                        document.getElementById("clothingId").value = "";
+                        errorDiv.textContent = "لباسی با این سایز و مدرسه یافت نشد. لطفا ترکیب دیگری را انتخاب کنید.";
+                    }
+                } catch (error) {
+                    document.getElementById("clothingId").value = "";
+                    errorDiv.textContent = "خطا در پیدا کردن شناسه لباس. دوباره تلاش کنید.";
+                }
+            } else {
+                document.getElementById("clothingId").value = "";
+            }
+        }
+
+        // تابع fetchInventories اصلاح شده برای دریافت پارامتر فیلتر
+        async function fetchInventories() {
+            const filterPatternId = document.getElementById("filterPattern").value; // دریافت مقدار فیلتر از select box
+
+            let url = "http://localhost:5014/api/Inventory";
+            if (filterPatternId) { // اگر فیلتری انتخاب شده باشد (value خالی نباشد)
+                url += `?patternId=${filterPatternId}`;
+            }
+
+            try {
+                const res = await fetch(url); // ارسال درخواست با پارامتر فیلتر
+                if (!res.ok) throw new Error("خطا در دریافت موجودی‌ها");
+
+                const inventories = await res.json();
+                const tbody = document.getElementById("inventoryTableBody");
+                tbody.innerHTML = "";
+
+                inventories.forEach(inventory => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                            <td>${inventory.patternName || "-"}</td>
+                            <td>${inventory.sizeName || "-"}</td>
+                            <td>${inventory.quantity?.toLocaleString() || "0"}</td>
+                        `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = "مشکل در بارگذاری موجودی‌ها.";
+            }
+        }
+
+        function clearForm() {
+            document.getElementById("inventorySize").value = "";
+            document.getElementById("inventoryPattern").value = "";
+            document.getElementById("quantity").value = "";
+            document.getElementById("clothingId").value = "";
+            errorDiv.textContent = ""; // پاک کردن ارورها هنگام باز کردن فرم
+        }
+
+        document.getElementById("inventoryPattern").addEventListener("change", fetchClothingId);
+        document.getElementById("inventorySize").addEventListener("change", fetchClothingId);
+
+        // اضافه کردن Event Listener برای فیلتر Pattern (مدرسه)
+        document.getElementById("filterPattern").addEventListener("change", fetchInventories);
+
+        saveInventoryBtn.addEventListener("click", async () => {
+            errorDiv.textContent = "";
+
+            const quantity = parseInt(document.getElementById("quantity").value);
+            const sizeId = document.getElementById("inventorySize").value;
+            const patternId = document.getElementById("inventoryPattern").value;
+
+            if (isNaN(quantity) || quantity <= 0 || !sizeId || !patternId) {
+                errorDiv.textContent = "لطفا تعداد و سایز و مدرسه را به درستی پر کنید.";
+                return;
+            }
+
+            let clothingId = document.getElementById("clothingId").value;
+            if (!clothingId) {
+                try {
+                    const response = await fetch(`http://localhost:5014/api/clothing/get-by-size-and-pattern`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            patternId: parseInt(patternId),
+                            sizeId: parseInt(sizeId)
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        clothingId = data.id || data.Id;
+                        document.getElementById("clothingId").value = clothingId;
+                    } else {
+                        errorDiv.textContent = "لباسی با این مشخصات یافت نشد. ثبت موجودی امکان‌پذیر نیست.";
+                        return;
+                    }
+                } catch (error) {
+                    errorDiv.textContent = "خطا در پیدا کردن شناسه لباس. دوباره تلاش کنید.";
+                    return;
+                }
+            }
+
+            if (!clothingId) {
+                errorDiv.textContent = "شناسه لباس نامعتبر است. لطفا سایز و مدرسه را انتخاب کنید.";
+                return;
+            }
+
+            const newInventory = {
+                clothingId: parseInt(clothingId),
+                quantity: quantity
+            };
+
+            try {
+                const res = await fetch("http://localhost:5014/api/Inventory", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(newInventory)
+                });
+
+                if (!res.ok) {
+                    const errorResponse = await res.json();
+                    let errorMessage = `خطا در ذخیره موجودی: ${res.statusText}`;
+                    if (errorResponse && errorResponse.detail) {
+                        errorMessage = `خطا در ذخیره موجودی: ${errorResponse.detail}`;
+                    } else if (errorResponse && errorResponse.errors) {
+                        errorMessage = `خطا در ذخیره موجودی: ${JSON.stringify(errorResponse.errors)}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                await fetchInventories();
+                inventoryModal.style.display = "none";
+                clearForm();
+            } catch (err) {
+                errorDiv.textContent = `خطا در ثبت موجودی. دوباره تلاش کنید. جزئیات: ${err.message}`;
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت هزینه‌ها</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        #error {
+            color: red;
+            text-align: center;
+        }
+
+        /* استایل دکمه و پاپ آپ */
+        .add-button {
+            display: inline-block;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            border-radius: 50%;
+            position: fixed;
+            top: 20px;
+            left: 20px; /* تغییر موقعیت به سمت چپ */
+        }
+
+        /* استایل پاپ آپ */
+        .modal {
+            display: none; /* مخفی بودن به طور پیش‌فرض */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: red;
+                cursor: pointer;
+            }
+
+        input {
+            margin-right: 10px;
+            padding: 8px;
+            width: calc(25% - 10px); /* تعیین عرض فیلدها */
+        }
+
+        button {
+            padding: 8px 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background-color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <h1>مدیریت هزینه‌ها</h1>
+
+    <div id="error"></div>
+
+    <!-- دکمه اضافه کردن رکورد -->
+    <button class="add-button" id="addCostBtn">+</button>
+
+    <!-- پاپ آپ برای اضافه کردن رکورد -->
+    <div id="costModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>اضافه کردن هزینه</h2>
+
+            <input type="number" id="amount" placeholder="هزینه" required>
+            <input type="date" id="date" placeholder="تاریخ" required>
+            <input type="text" id="description" placeholder="توضیحات">
+            <input type="number" id="dailySalesAmount" placeholder="مقدار فروش روز">
+            <input type="text" id="title" placeholder="عنوان" required>
+            <button id="saveCostBtn">ذخیره</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+
+                <th>مقدار فروش روز</th>
+                <th>توضیحات</th>
+                <th>تاریخ</th>
+                <th>هزینه</th>
+                <th>عنوان</th>
+            </tr>
+        </thead>
+        <tbody id="costsTableBody">
+            <!-- Rows will be inserted here dynamically -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchCosts() {
+            try {
+                const response = await fetch("http://localhost:5014/api/cost");
+                if (!response.ok) throw new Error("Error fetching data");
+
+                const costs = await response.json();
+                const tableBody = document.getElementById("costsTableBody");
+                tableBody.innerHTML = "";
+
+                costs.forEach(cost => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                                                           
+                                <td>${cost.dailySalesAmount || "-"}</td>
+                                <td>${cost.description || "-"}</td>
+                                   <td>${new Date(cost.date).toLocaleDateString()}</td>
+                                <td>${cost.amount}</td>
+                                 <td>${cost.title}</td>
+                            `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                document.getElementById("error").textContent = "Failed to load costs data.";
+                console.error("Error:", error);
+            }
+        }
+
+        document.getElementById('addCostBtn').addEventListener('click', function () {
+            document.getElementById('costModal').style.display = "block"; // نمایش پاپ آپ
+        });
+
+        document.getElementById('closeModal').addEventListener('click', function () {
+            document.getElementById('costModal').style.display = "none"; // مخفی کردن پاپ آپ
+        });
+
+        document.getElementById('saveCostBtn').addEventListener('click', async function () {
+            const newCost = {
+                title: document.getElementById('title').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('date').value,
+                description: document.getElementById('description').value || null,
+                dailySalesAmount: parseFloat(document.getElementById('dailySalesAmount').value) || null,
+            };
+
+            try {
+                const response = await fetch("http://localhost:5014/api/cost", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(newCost)
+                });
+
+                if (!response.ok) throw new Error("Error adding cost");
+
+
+                document.getElementById('costModal').style.display = "none"; // مخفی کردن پاپ آپ
+                fetchCosts();
+            } catch (error) {
+                document.getElementById("error").textContent = "خطا در اضافه کردن هزینه.";
+                console.error("Error:", error, await error.response.text());
+            }
+        });
+
+        fetchCosts();
+    </script>
+</body>
+</html>

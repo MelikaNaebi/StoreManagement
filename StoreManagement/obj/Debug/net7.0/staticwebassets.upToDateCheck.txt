@@ -1,0 +1,9 @@
+wwwroot\cost.html
+wwwroot\index.html
+wwwroot\Inventory.html
+wwwroot\Orders.html
+wwwroot\Pictures\images.jpg
+wwwroot\Pictures\inventory.jpg
+wwwroot\Pictures\orders.jpg
+wwwroot\Pictures\Sale.jpg
+wwwroot\sale.html

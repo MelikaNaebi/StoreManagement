@@ -1,0 +1,980 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مدیریت سفارشات</title>
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.1.3/dist/css/persian-datepicker.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: white;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+            th .table-filter {
+                width: calc(100% - 16px);
+                padding: 3px;
+                margin-top: 5px;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                box-sizing: border-box;
+                font-size: 0.9em;
+                text-align: right;
+                direction: rtl;
+            }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+
+        #error {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .add-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #28a745;
+            color: white;
+            font-size: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 999;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.3);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+            .close:hover {
+                color: red;
+            }
+
+        input:not(.table-filter):not(.persian-date-input), select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button.save-btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
+            button.save-btn:hover {
+                background-color: #0056b3;
+            }
+
+        .filter-section {
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 15px;
+            background-color: #e9f5ff;
+            border-radius: 8px;
+            border: 1px solid #cce0ff;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .filter-section label {
+            font-weight: bold;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .filter-section select,
+        .filter-section input.persian-date-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #007BFF;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .persian-date-input {
+            text-align: right;
+            direction: rtl;
+        }
+
+        .action-button {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        .edit-button {
+            background-color: #ffc107;
+            color: white;
+        }
+
+            .edit-button:hover {
+                background-color: #e0a800;
+            }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+            .delete-button:hover {
+                background-color: #c82333;
+            }
+
+        /* Styles for Delivery Modal */
+        .deliver-button {
+            background-color: #0d6efd; /* Blue for deliver */
+            color: white;
+        }
+
+            .deliver-button:hover {
+                background-color: #0a58ca;
+            }
+
+        .delivery-info {
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #555;
+            text-align: right;
+            direction: rtl;
+        }
+
+            .delivery-info span {
+                color: #007BFF;
+            }
+
+        .amount-due {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>مدیریت سفارشات</h1>
+    <div id="error"></div>
+
+    <button class="add-button" id="addOrderBtn">+</button>
+
+    <div class="filter-section">
+        <div class="filter-group">
+            <label for="filterPattern">فیلتر بر اساس مدرسه:</label>
+            <select id="filterPattern">
+                <option value="">همه مدارس</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="filterSize">فیلتر بر اساس سایز:</label>
+            <select id="filterSize">
+                <option value="">همه سایزها</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="startDate">از تاریخ:</label>
+            <input type="text" id="startDate" class="persian-date-input" />
+        </div>
+
+        <div class="filter-group">
+            <label for="endDate">تا تاریخ:</label>
+            <input type="text" id="endDate" class="persian-date-input" />
+        </div>
+
+    </div>
+
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeOrderModal">&times;</span>
+            <h2 id="orderModalTitle">اضافه کردن سفارش</h2>
+            <input type="text" id="customerName" placeholder="نام مشتری" required />
+            <input type="text" id="customerPhoneNumber" placeholder="شماره تلفن مشتری" />
+
+            <select id="orderSize" required>
+                <option value="">انتخاب سایز</option>
+            </select>
+
+            <select id="orderPattern" required>
+                <option value="">انتخاب مدرسه</option>
+            </select>
+
+            <input type="text" id="orderDate" class="persian-date-input" placeholder="تاریخ سفارش" required />
+
+            <input type="number" id="deposit" placeholder="بیعانه" value="0" />
+
+            <input type="text" id="description" placeholder="توضیحات (اختیاری)" />
+
+            <input type="hidden" id="orderClothingId" name="ClothingId" />
+            <input type="hidden" id="orderIdToEdit" />
+            <button class="save-btn" id="saveOrderBtn">ذخیره</button>
+        </div>
+    </div>
+
+    <div id="deliveryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeDeliveryModal">&times;</span>
+            <h2>تحویل و تسویه سفارش</h2>
+            <div class="delivery-info">
+                <p>مشتری: <span id="deliveryCustomerName"></span></p>
+                <p>محصول: <span id="deliveryProductName"></span></p>
+                <p>بیعانه اولیه: <span id="deliveryInitialDeposit">0</span> ریال</p>
+            </div>
+
+            <label for="deliverySoldPrice">مبلغ نهایی فروش (ریال):</label>
+            <input type="number" id="deliverySoldPrice" placeholder="مبلغ فروش نهایی" required min="0" />
+
+            <label for="deliveryDiscount">تخفیف (ریال - اختیاری):</label>
+            <input type="number" id="deliveryDiscount" placeholder="مبلغ تخفیف" value="0" min="0" />
+
+            <label for="deliveryDescription">توضیحات فروش نهایی (اختیاری):</label>
+            <input type="text" id="deliveryDescription" placeholder="توضیحات برای ثبت در فروش" />
+
+            <div class="amount-due">
+                مبلغ باقیمانده (جهت تسویه): <span id="deliveryAmountDue">0</span> ریال
+            </div>
+
+            <button class="save-btn" id="saveDeliveryBtn">تایید تحویل و ثبت فروش</button>
+        </div>
+    </div>
+
+
+    <table>
+        <thead>
+            <tr>
+                <th>عملیات</th>
+                <th>
+                    نام مشتری
+                    <input type="text" class="table-filter" data-column="1" placeholder="فیلتر" />
+                </th>
+                <th>شماره تلفن</th>
+                <th>سایز</th>
+                <th>مدرسه</th>
+                <th>تاریخ سفارش</th>
+                <th>بیعانه</th>
+                <th>
+                    توضیحات
+                    <input type="text" class="table-filter" data-column="7" placeholder="فیلتر" />
+                </th>
+            </tr>
+        </thead>
+        <tbody id="ordersTableBody">
+        </tbody>
+    </table>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.1.3/dist/js/persian-datepicker.min.js"></script>
+
+    <script>
+
+        let allSizes = []; // باید در بالای اسکریپت و در بالاترین اسکوپ تعریف شوند
+        let allPatterns = []; // باید در بالای اسکریپت و در بالاترین اسکوپ تعریف شوند
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Initialize Persian Datepickers
+            $(".persian-date-input").persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValue: false,
+                onSelect: function (unix) {
+                    // For filter datepickers, trigger fetchOrders
+                    if (this.$el[0].id === 'startDate' || this.$el[0].id === 'endDate') {
+                        fetchOrders();
+                    }
+                    // For orderDate in modal, no automatic fetch needed on select
+                }
+            });
+
+            fetchSizes();
+            fetchPatterns();
+            fetchOrders(); // Initial fetch of orders
+        });
+
+        const addOrderBtn = document.getElementById("addOrderBtn");
+        const orderModal = document.getElementById("orderModal");
+        const closeOrderModalBtn = document.getElementById("closeOrderModal");
+        const saveOrderBtn = document.getElementById("saveOrderBtn");
+        const errorDiv = document.getElementById("error");
+        const orderModalTitle = document.getElementById("orderModalTitle");
+
+        // Input fields in the Order modal
+        const customerNameInput = document.getElementById("customerName");
+        const customerPhoneNumberInput = document.getElementById("customerPhoneNumber");
+        const orderSizeSelect = document.getElementById("orderSize");
+        const orderPatternSelect = document.getElementById("orderPattern");
+        const orderDateInput = document.getElementById("orderDate");
+
+        const depositInput = document.getElementById("deposit");
+        const descriptionInput = document.getElementById("description");
+        const orderClothingIdInput = document.getElementById("orderClothingId");
+        const orderIdToEditInput = document.getElementById("orderIdToEdit");
+
+        // Filter elements (outside table)
+        const filterPatternSelect = document.getElementById("filterPattern");
+        const filterSizeSelect = document.getElementById("filterSize");
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+
+        // Delivery Modal elements
+        // Delivery Modal elements
+        const deliveryModal = document.getElementById("deliveryModal");
+        const closeDeliveryModalBtn = document.getElementById("closeDeliveryModal");
+        const saveDeliveryBtn = document.getElementById("saveDeliveryBtn");
+        const deliveryCustomerNameSpan = document.getElementById("deliveryCustomerName");
+        const deliveryProductNameSpan = document.getElementById("deliveryProductName");
+        const deliveryInitialDepositSpan = document.getElementById("deliveryInitialDeposit");
+        const deliverySoldPriceInput = document.getElementById("deliverySoldPrice");
+        const deliveryDiscountInput = document.getElementById("deliveryDiscount");
+        const deliveryDescriptionInput = document.getElementById("deliveryDescription");
+        const deliveryAmountDueSpan = document.getElementById("deliveryAmountDue");
+
+        let currentOrderIdForDelivery = null; // To store the ID of the order being delivered
+
+
+        addOrderBtn.addEventListener("click", () => {
+            clearOrderForm();
+            orderModalTitle.textContent = "اضافه کردن سفارش";
+            errorDiv.textContent = "";
+            orderModal.style.display = "block";
+        });
+
+        closeOrderModalBtn.addEventListener("click", () => {
+            orderModal.style.display = "none";
+        });
+
+        closeDeliveryModalBtn.addEventListener('click', () => {
+            deliveryModal.style.display = 'none';
+            // Remove event listeners for live calculation to prevent memory leaks/multiple listeners
+            deliverySoldPriceInput.removeEventListener('input', calculateAmountDue);
+            deliveryDiscountInput.removeEventListener('input', calculateAmountDue);
+        });
+
+        window.onclick = function (event) {
+            if (event.target == orderModal) {
+                orderModal.style.display = "none";
+            }
+            if (event.target == deliveryModal) {
+                deliveryModal.style.display = "none";
+                // Remove event listeners for live calculation
+                deliverySoldPriceInput.removeEventListener('input', calculateAmountDue);
+                deliveryDiscountInput.removeEventListener('input', calculateAmountDue);
+            }
+        };
+
+        // Event Listeners for automatic filtering on change of dropdowns
+        filterPatternSelect.addEventListener("change", fetchOrders);
+        filterSizeSelect.addEventListener("change", fetchOrders);
+
+        // Function to fetch available sizes from API
+        async function fetchSizes() {
+            try {
+                const res = await fetch("http://localhost:5014/api/sizes");
+                if (!res.ok) throw new Error("خطا در دریافت سایزها");
+                allSizes = await res.json(); // <-- پر کردن متغیر سراسری
+
+                // پر کردن دراپ‌داون‌های فیلتر و مودال
+                populateDropdown(filterSizeSelect, allSizes, "همه سایزها", "id", "sizeName");
+                populateDropdown(orderSizeSelect, allSizes, "انتخاب سایز", "id", "sizeName");
+
+            } catch (err) {
+                console.error("Error fetching sizes:", err);
+                errorDiv.textContent = "مشکل در بارگذاری سایزها.";
+            }
+        }
+
+
+        // Function to fetch available patterns (schools) from API
+        async function fetchPatterns() {
+            try {
+                const res = await fetch("http://localhost:5014/api/pattern");
+                if (!res.ok) throw new Error("خطا در دریافت مدارس");
+                allPatterns = await res.json(); // <-- پر کردن متغیر سراسری
+
+                // پر کردن دراپ‌داون‌های فیلتر و مودال
+                populateDropdown(filterPatternSelect, allPatterns, "همه مدارس", "id", "name");
+                populateDropdown(orderPatternSelect, allPatterns, "انتخاب مدرسه", "id", "name");
+
+            } catch (err) {
+                console.error("Error fetching patterns:", err);
+                errorDiv.textContent = "مشکل در بارگذاری مدارس.";
+            }
+        }
+        function populateDropdown(selectElement, data, defaultOptionText, valueKey, textKey) {
+            selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+            data.forEach(item => {
+                const option = document.createElement("option");
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                selectElement.appendChild(option);
+            });
+        }
+        // Function to fetch orders data from API
+        async function fetchOrders() {
+            try {
+                const patternId = filterPatternSelect.value;
+                const sizeId = filterSizeSelect.value;
+                const startDatePersian = startDateInput.value;
+                const endDatePersian = endDateInput.value;
+
+                let startDateGregorian = null;
+                let endDateGregorian = null;
+
+                if (startDatePersian) {
+                    try {
+                        startDateGregorian = new persianDate([
+                            parseInt(startDatePersian.split('/')[0]),
+                            parseInt(startDatePersian.split('/')[1]),
+                            parseInt(startDatePersian.split('/')[2])
+                        ]).toDate().toISOString();
+                    } catch (e) {
+                        console.error("Invalid start date format:", startDatePersian, e);
+                        errorDiv.textContent = "فرمت تاریخ شروع نامعتبر است.";
+                        return;
+                    }
+                }
+                if (endDatePersian) {
+                    try {
+                        // For endDate, set to end of the day to include full day
+                        let pDate = new persianDate([
+                            parseInt(endDatePersian.split('/')[0]),
+                            parseInt(endDatePersian.split('/')[1]),
+                            parseInt(endDatePersian.split('/')[2])
+                        ]);
+                        // Set time to 23:59:59 for end of day
+                        pDate.endOf('day');
+                        endDateGregorian = pDate.toDate().toISOString();
+                    } catch (e) {
+                        console.error("Invalid end date format:", endDatePersian, e);
+                        errorDiv.textContent = "فرمت تاریخ پایان نامعتبر است.";
+                        return;
+                    }
+                }
+
+                // *** CRITICAL CHANGE HERE ***
+                let url = "http://localhost:5014/api/Orders"; // Corrected Endpoint for orders
+                const params = new URLSearchParams();
+                if (patternId) {
+                    params.append("patternId", patternId);
+                }
+                if (sizeId) {
+                    params.append("sizeId", sizeId);
+                }
+                if (startDateGregorian) {
+                    params.append("startDate", startDateGregorian);
+                }
+                if (endDateGregorian) {
+                    params.append("endDate", endDateGregorian);
+                }
+
+                if (params.toString()) {
+                    url += `?${params.toString()}`;
+                }
+
+                const res = await fetch(url);
+                if (!res.ok) {
+                    // Try to parse error message if available
+                    const errorResponseText = await res.text();
+                    console.error("API response not OK:", errorResponseText);
+                    throw new Error(`خطا در دریافت سفارش‌ها: ${res.status} ${res.statusText}. پاسخ سرور: ${errorResponseText.substring(0, 100)}...`); // Show part of response for debug
+                }
+
+                const orders = await res.json();
+                const tbody = document.getElementById("ordersTableBody");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                orders.forEach(order => {
+                    const orderDateGregorian = new Date(order.orderDate);
+                    const orderDatePersian = new persianDate(orderDateGregorian).toLocale('fa').format('YYYY/MM/DD');
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                  <td>
+                      <button onclick="editOrder(${order.id})" class="action-button edit-button">اصلاح</button>
+                      <button onclick="deleteOrder(${order.id})" class="action-button delete-button">حذف</button>
+                       <button onclick="openDeliveryModal(${order.id}, '${order.customerName}', '${order.clothing ? (order.clothing.patternName || '-') + ' - ' + (order.clothing.sizeName || '-') : 'نامشخص'}', ${order.deposit || 0})" class="action-button deliver-button">تحویل و تسویه</button>                  </td>
+                  <td>${order.customerName || "-"}</td>
+                  <td>${order.customerPhoneNumber || "-"}</td>
+                  <td>${order.sizeName || "-"}</td>
+                  <td>${order.patternName || "-"}</td>
+                  <td>${orderDatePersian}</td>
+                  <td>${(order.deposit || 0).toLocaleString('fa-IR')}</td>
+                  <td>${order.description || "-"}</td>
+              `;
+                    tbody.appendChild(tr);
+                });
+
+                filterTable(); // Apply inline filters after table is populated
+
+            } catch (err) {
+                console.error("Error fetching orders:", err);
+                errorDiv.textContent = "مشکل در بارگذاری سفارش‌ها: " + err.message;
+            }
+        }
+
+        // Function to clear Order modal form inputs
+        function clearOrderForm() {
+            customerNameInput.value = "";
+            customerPhoneNumberInput.value = "";
+            orderSizeSelect.value = "";
+            orderPatternSelect.value = "";
+            orderDateInput.value = "";
+            depositInput.value = "0"; // Reset deposit to 0
+            descriptionInput.value = "";
+            orderClothingIdInput.value = "";
+            orderIdToEditInput.value = "";
+            errorDiv.textContent = "";
+        }
+
+        // Script to fetch ClothingId based on selected Size and Pattern for order modal
+        async function fetchOrderClothingId() {
+            const patternId = orderPatternSelect.value;
+            const sizeId = orderSizeSelect.value;
+
+            errorDiv.textContent = "";
+            orderClothingIdInput.value = "";
+
+            if (!patternId || !sizeId) {
+                console.log("سایز یا مدرسه انتخاب نشده است.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5014/api/clothing/get-by-size-and-pattern`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        patternId: parseInt(patternId),
+                        sizeId: parseInt(sizeId)
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    orderClothingIdInput.value = data.id || data.clothingId || data.Id;
+                    console.log("ClothingId fetched successfully for order:", data);
+                    errorDiv.textContent = "";
+                } else {
+                    const errorText = await response.text(); // Get raw text to check if it's JSON or HTML
+                    let errorMessage = "لباسی با این سایز و مدرسه یافت نشد. لطفا ترکیب دیگری را انتخاب کنید.";
+                    try {
+                        const errorData = JSON.parse(errorText); // Try to parse as JSON
+                        errorMessage = errorData.message || errorData.detail || errorMessage;
+                    } catch (e) {
+                        // Not JSON, use raw text or default message
+                        errorMessage = `خطا در دریافت شناسه لباس: ${response.status} ${response.statusText}. پاسخ سرور: ${errorText.substring(0, 100)}...`;
+                    }
+                    console.error("خطا در دریافت ClothingId:", errorMessage);
+                    errorDiv.textContent = errorMessage;
+                }
+            } catch (error) {
+                console.error("Error fetching clothing ID for order:", error);
+                errorDiv.textContent = "خطا در پیدا کردن شناسه لباس: " + error.message;
+            }
+        }
+
+        // Add event listeners for order modal dropdowns to fetch ClothingId
+        orderPatternSelect.addEventListener("change", fetchOrderClothingId);
+        orderSizeSelect.addEventListener("change", fetchOrderClothingId);
+        // edit function 
+       async function editOrder(orderId) {
+            clearOrderForm();
+            orderModalTitle.textContent = " اصلاح سفارش";
+            orderIdToEditInput.value = orderId;
+
+            try {
+                const res = await fetch(`http://localhost:5014/api/orders/${orderId}`);
+                if (!res.ok) throw new Error("خطا در دریافت اطلاعات سفارش برای ویرایش..");
+
+                const order = await res.json();
+
+                customerNameInput.value = order.customerName;
+                customerPhoneNumberInput.value = order.customerPhoneNumber;
+
+                // Fetch sizes/patterns first to populate dropdowns
+                await Promise.all([fetchSizes(), fetchPatterns()]);
+
+                // Then set the selected values
+				
+                if (order.clothing) {
+                    orderSizeSelect.value = order.clothing.sizeId;
+                    orderPatternSelect.value = order.clothing.patternId;
+                } else {
+                    // Fallback or error if clothing info is not available
+                    console.warn("Clothing details not available for order", orderId);
+                }
+
+                // Manually trigger fetchClothingId after setting dropdowns for edit mode
+                // This ensures clothingIdInput is correctly set for existing orders too.
+                fetchOrderClothingId();
+
+                const orderDateGregorian = new Date(order.date);
+                const orderDatePersian = new persianDate(orderDateGregorian).toLocale('fa').format('YYYY/MM/DD');
+                orderDateInput.value = orderDatePersian;
+
+                depositInput.value = order.deposit;
+                descriptionInput.value = order.description;
+				
+                orderClothingIdInput.value = order.clothingId;
+
+                orderModal.style.display = "block";
+
+            } catch (err) {
+                console.error("Error fetching order for edit:", err);
+                errorDiv.textContent = "مشکل در بارگذاری اطلاعات سفارش برای ویرایش.";
+            }
+        }
+
+        // Save new order or update existing order logic
+        saveOrderBtn.addEventListener("click", async () => {
+            errorDiv.textContent = "";
+
+            const orderId = orderIdToEditInput.value;
+            const isEditing = !!orderId;
+
+            const customerName = customerNameInput.value.trim();
+            const customerPhoneNumber = customerPhoneNumberInput.value.trim();
+            const sizeId = orderSizeSelect.value;
+            const patternId = orderPatternSelect.value;
+            const orderDatePersian = orderDateInput.value;
+            const deposit = parseFloat(depositInput.value) || 0; // Default to 0 if not entered
+            const description = descriptionInput.value.trim();
+
+            if (!customerName || !sizeId || !patternId || !orderDatePersian) {
+                errorDiv.textContent = "لطفا همه فیلدهای ضروری (نام مشتری، سایز، مدرسه، تاریخ سفارش) را پر کنید.";
+                return;
+            }
+
+            let orderDateGregorian = null;
+            try {
+                orderDateGregorian = new persianDate([
+
+                    parseInt(orderDatePersian.split('/')[0]),
+                    parseInt(orderDatePersian.split('/')[1]),
+                    parseInt(orderDatePersian.split('/')[2])
+                ]).toDate().toISOString();
+            } catch (e) {
+                console.error("Invalid order date format:", orderDatePersian, e);
+                errorDiv.textContent = "فرمت تاریخ سفارش نامعتبر است.";
+                return;
+            }
+
+            await fetchOrderClothingId(); // Ensure clothingId is set - using await here for critical path
+            const clothingId = orderClothingIdInput.value;
+
+            if (!clothingId) {
+                errorDiv.textContent = errorDiv.textContent || "شناسه لباس نامعتبر است. لطفا سایز و مدرسه را انتخاب کنید.";
+                return;
+            }
+
+            const orderData = {
+                customerName: customerName,
+                customerPhoneNumber: customerPhoneNumber,
+                orderDate: orderDateGregorian,
+                deposit: deposit,
+                description: description,
+                clothingId: parseInt(clothingId)
+            };
+
+            let method = "POST";
+            let url = "http://localhost:5014/api/orders"; // Endpoint for adding orders
+
+            if (isEditing) {
+                method = "PUT";
+                url = `http://localhost:5014/api/orders/${orderId}`; // Endpoint for updating orders
+                orderData.id = parseInt(orderId); // Include ID for PUT request
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!res.ok) {
+                    const errorResponseText = await res.text(); // Get raw text
+                    let errorMessage = `خطا در ${isEditing ? "اصلاح" : "ذخیره"} سفارش.`;
+                    try {
+                        const errorJson = JSON.parse(errorResponseText);
+                        errorMessage = errorJson.message || errorJson.detail || errorMessage + " " + (errorJson.errors ? JSON.stringify(errorJson.errors) : "");
+                    } catch (e) {
+                        // Not JSON, use raw text
+                        errorMessage += " پاسخ سرور: " + errorResponseText.substring(0, 100) + "...";
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                errorDiv.textContent = `سفارش با موفقیت ${isEditing ? "اصلاح" : "ذخیره"} شد.`;
+                await fetchOrders(); // Refresh the orders table
+                orderModal.style.display = "none";
+                clearOrderForm();
+            } catch (err) {
+                console.error(err);
+                errorDiv.textContent = `خطا: ${err.message}`;
+            }
+        });
+
+        // Function to handle order deletion
+        async function deleteOrder(orderId) {
+            if (!confirm("آیا از حذف این سفارش اطمینان دارید؟ این عمل قابل بازگشت نیست.")) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:5014/api/orders/${orderId}`, {
+                    method: "DELETE"
+                });
+
+                if (!res.ok) {
+                    const errorResponseText = await res.text();
+                    let errorMessage = "خطا در حذف سفارش.";
+                    try {
+                        const errorJson = JSON.parse(errorResponseText);
+                        errorMessage = errorJson.message || errorJson.detail || errorMessage + " " + (errorJson.errors ? JSON.stringify(errorJson.errors) : "");
+                    } catch (e) {
+                        errorMessage += " پاسخ سرور: " + errorResponseText.substring(0, 100) + "...";
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                errorDiv.textContent = "سفارش با موفقیت حذف شد.";
+                await fetchOrders(); // Refresh the orders table
+            } catch (err) {
+                console.error("Error deleting order:", err);
+                errorDiv.textContent = "مشکل در حذف سفارش: " + err.message;
+            }
+        }
+
+        // --- Inline Table Filtering ---
+        document.querySelectorAll('.table-filter').forEach(filterInput => {
+            filterInput.addEventListener('keyup', filterTable);
+        });
+
+        function filterTable() {
+            const tbody = document.getElementById("ordersTableBody");
+            const rows = tbody.getElementsByTagName('tr');
+            const filters = Array.from(document.querySelectorAll('.table-filter')).map(input => ({
+                columnIndex: parseInt(input.dataset.column),
+                value: input.value.toLowerCase().trim()
+            }));
+
+            Array.from(rows).forEach(row => {
+                let display = true;
+                filters.forEach(filter => {
+                    const cell = row.cells[filter.columnIndex];
+                    if (cell && filter.value) {
+                        if (!cell.textContent.toLowerCase().includes(filter.value)) {
+                            display = false;
+                        }
+                    }
+                });
+                row.style.display = display ? '' : 'none';
+            });
+        }
+
+        // --- Delivery Modal Functions ---
+        // Ensure this function is in the global scope or accessible from the button's onclick
+        function openDeliveryModal(orderId, customerName, productName, initialDeposit) {
+            currentOrderIdForDelivery = orderId; // Store the order ID for when we save
+
+            deliveryCustomerNameSpan.textContent = customerName;
+            deliveryProductNameSpan.textContent = productName;
+            deliveryInitialDepositSpan.textContent = initialDeposit.toLocaleString('fa-IR'); // Format to Persian numbers
+
+            // Clear previous values when opening
+            deliverySoldPriceInput.value = '';
+            deliveryDiscountInput.value = '0'; // Default discount to 0
+            deliveryDescriptionInput.value = '';
+
+            // Initially calculate amount due (before user input)
+            calculateAmountDue();
+
+            // Add event listeners for live calculation of amount due
+            // IMPORTANT: Make sure to remove these listeners when closing the modal to prevent duplicates
+            deliverySoldPriceInput.addEventListener('input', calculateAmountDue);
+            deliveryDiscountInput.addEventListener('input', calculateAmountDue);
+
+            deliveryModal.style.display = "block"; // Show the modal
+            errorDiv.textContent = ""; // Clear any previous errors
+        }
+        function calculateAmountDue() {
+            // گرفتن بیعانه اولیه از المنت HTML
+            // حتماً کاماها را حذف کنید چون .toLocaleString() ممکن است کاما اضافه کند.
+            const initialDepositText = deliveryInitialDepositSpan.textContent.replace(/,/g, '');
+            const initialDeposit = parseFloat(initialDepositText) || 0;
+
+            // گرفتن مبلغ نهایی فروش از ورودی کاربر
+            const soldPrice = parseFloat(deliverySoldPriceInput.value) || 0;
+
+            // گرفتن تخفیف از ورودی کاربر
+            const discount = parseFloat(deliveryDiscountInput.value) || 0;
+
+            // محاسبه مبلغ باقیمانده: مبلغ نهایی فروش - بیعانه اولیه - تخفیف
+            const amountDue = soldPrice - initialDeposit - discount;
+
+            // نمایش نتیجه با فرمت فارسی
+            deliveryAmountDueSpan.textContent = amountDue.toLocaleString('fa-IR');
+        }
+        saveDeliveryBtn.addEventListener("click", async () => {
+            errorDiv.textContent = ""; // پاک کردن خطاهای قبلی
+
+            if (!currentOrderIdForDelivery) {
+                errorDiv.textContent = "شناسه سفارش برای تحویل نامعتبر است.";
+                return;
+            }
+
+            const soldPrice = parseFloat(deliverySoldPriceInput.value);
+            const discount = parseFloat(deliveryDiscountInput.value) || 0;
+            const finalDescription = deliveryDescriptionInput.value.trim();
+
+            if (isNaN(soldPrice) || soldPrice < 0) {
+                errorDiv.textContent = "لطفاً مبلغ نهایی فروش را به درستی وارد کنید. (عدد بزرگتر یا مساوی صفر)";
+                return;
+            }
+
+            try {
+                // ساخت آبجکت داده‌ها برای ارسال به endpoint "process-to-sale"
+                // طبق DTO بک‌اند شما: ProcessOrderToSaleDto
+                const processDto = {
+                    // OrderId را اینجا در body قرار نمی‌دهیم، چون به عنوان path parameter ارسال می‌شود.
+                    // اگر بک‌اند شما OrderId را هم در DTO و هم در Path Parameter نیاز دارد، باید اینجا هم OrderId را قرار دهید.
+                    // اما بهتر است فقط در Path Parameter باشد.
+                    // اگر در تست با Postman OrderId در Body بود، آن را اضافه کنید.
+                    // OrderId: currentOrderIdForDelivery, // اگر بک اند OrderId را در body هم میخواهد
+                    SoldPrice: soldPrice, // نام فیلد باید با PascalCase بک‌اند مطابقت داشته باشد
+                    Discount: discount, // نام فیلد باید با PascalCase بک‌اند مطابقت داشته باشد
+                    SaleDescription: finalDescription // نام فیلد باید با PascalCase بک‌اند مطابقت داشته باشد
+                };
+
+                // ارسال درخواست POST به Endpoint صحیح
+                const res = await fetch(`http://localhost:5014/api/orders/${currentOrderIdForDelivery}/process-to-sale`, { // <--- URL نهایی
+                    method: "POST", // <--- متد POST
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(processDto) // ارسال DTO با داده‌های کاربر
+                });
+
+                if (!res.ok) {
+                    const errorResponseText = await res.text();
+                    let errorMessage = "خطا در ثبت تحویل و فروش سفارش.";
+                    try {
+                        // تلاش برای خواندن پیام خطای JSON از بک‌اند
+                        const errorJson = JSON.parse(errorResponseText);
+                        errorMessage = errorJson.message || errorJson.detail || errorMessage + " " + (errorJson.errors ? JSON.stringify(errorJson.errors) : ""); //
+                    } catch (e) {
+                        // اگر پاسخ JSON نبود، از متن خام استفاده کن
+                        errorMessage += " پاسخ سرور: " + errorResponseText.substring(0, 200) + "..."; //
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                // عملیات موفقیت‌آمیز بود
+                errorDiv.textContent = "سفارش با موفقیت تحویل و فروش ثبت شد."; //
+                await fetchOrders(); // رفرش کردن جدول سفارشات (سفارش تحویل شده باید حذف شده باشد)
+                deliveryModal.style.display = "none"; // بستن مودال
+
+            } catch (err) {
+                console.error("Error processing to sale:", err);
+                errorDiv.textContent = `خطا: ${err.message}`; //
+            }
+        });        window.editOrder = editOrder;
+
+    </script>
+</body>

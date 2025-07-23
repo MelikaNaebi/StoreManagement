@@ -1,0 +1,61 @@
+{
+  "Files": [
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Inventory.html",
+      "PackagePath": "staticwebassets\\Inventory.html"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Orders.html",
+      "PackagePath": "staticwebassets\\Orders.html"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Pictures\\Sale.jpg",
+      "PackagePath": "staticwebassets\\Pictures\\Sale.jpg"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Pictures\\images.jpg",
+      "PackagePath": "staticwebassets\\Pictures\\images.jpg"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Pictures\\inventory.jpg",
+      "PackagePath": "staticwebassets\\Pictures\\inventory.jpg"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\Pictures\\orders.jpg",
+      "PackagePath": "staticwebassets\\Pictures\\orders.jpg"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\cost.html",
+      "PackagePath": "staticwebassets\\cost.html"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "F:\\Projects\\StoreManagement\\StoreManagement\\wwwroot\\sale.html",
+      "PackagePath": "staticwebassets\\sale.html"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.StoreManagement.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.StoreManagement.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.build.StoreManagement.props",
+      "PackagePath": "build\\StoreManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildMultiTargeting.StoreManagement.props",
+      "PackagePath": "buildMultiTargeting\\StoreManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net7.0\\staticwebassets\\msbuild.buildTransitive.StoreManagement.props",
+      "PackagePath": "buildTransitive\\StoreManagement.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
